@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f7f4f1">
+  <title>JollyKick</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<main class="shell">
+  <section id="loginView" class="card auth">
+    <div class="brand">👣</div><p class="eyebrow">JOLLYKICK</p>
+    <h1>บันทึกทุกการเคลื่อนไหวของเจ้าตัวน้อย</h1>
+    <p class="muted">เข้าสู่ระบบด้วยบัญชีทดสอบก่อน ในขั้นถัดไปเราจะเพิ่มการสมัครสมาชิกและ Social Login</p>
+    <form id="loginForm">
+      <label>อีเมล<input id="email" type="email" autocomplete="username" required></label>
+      <label>รหัสผ่าน<input id="password" type="password" autocomplete="current-password" required></label>
+      <button class="primary" type="submit">เข้าสู่ระบบ</button>
+      <p id="loginError" class="error"></p>
+    </form>
+  </section>
+
+  <section id="setupView" class="card auth" hidden>
+    <div class="brand">🤰</div><p class="eyebrow">WELCOME TO JOLLYKICK</p>
+    <h1>เริ่มต้นข้อมูลการตั้งครรภ์</h1>
+    <p class="muted">กรอกเพียงข้อมูลที่จำเป็นก่อน คุณสามารถแก้ไขชื่อเล่นของลูกภายหลังได้</p>
+    <form id="pregnancyForm">
+      <label>ชื่อเล่นของลูก <span class="muted">(ไม่บังคับ)</span>
+        <input id="babyNickname" type="text" maxlength="80" placeholder="เช่น น้องอุ่น">
+      </label>
+      <p class="field-help">ยังไม่ได้ตั้งชื่อ? เว้นว่างไว้ก่อนได้</p>
+      <label>กำหนดคลอด *<input id="dueDate" type="date" required></label>
+      <button class="primary" type="submit">เริ่มใช้งาน JollyKick</button>
+      <p id="setupError" class="error"></p>
+    </form>
+    <button id="setupLogoutBtn" class="text-btn centered">ออกจากระบบ</button>
+  </section>
+
+  <section id="appView" hidden>
+    <header>
+      <div><p class="eyebrow">JOLLYKICK · <span id="planBadge">FREE</span></p><h1 id="babyTitle">เจ้าตัวน้อย</h1><p id="pregnancyAge" class="muted compact"></p></div>
+      <button id="logoutBtn" class="ghost">ออกจากระบบ</button>
+    </header>
+    <nav class="tabs card" aria-label="เมนูหลัก">
+      <button class="tab active" data-view="today">วันนี้</button><button class="tab" data-view="logs">ประวัติ</button><button class="tab" data-view="activity">Activity</button>
+    </nav>
+
+    <div id="todayView" class="view">
+      <section class="summary card"><div><span class="muted">วันนี้บันทึกแล้ว</span><strong id="todayCount">0</strong><span>ครั้ง</span></div><div><span class="muted">ล่าสุด</span><strong id="lastKick">—</strong></div></section>
+      <section class="card record">
+        <button id="kickBtn" class="kick">👣<span>ลูกดิ้น</span></button>
+        <p class="hint">กดทันทีเมื่อรู้สึกถึงการเคลื่อนไหว ระบบจะบันทึกวันและเวลาอัตโนมัติ</p>
+        <div id="movementPanel" class="movement-panel" hidden><div class="saved-banner">✓ <span id="savedAt">บันทึกแล้ว</span></div><p><strong>ลักษณะการดิ้นครั้งนี้</strong> <span class="muted">(ไม่บังคับ)</span></p><div id="movementOptions" class="chips"></div><button id="skipMovementBtn" class="text-btn">ข้าม</button></div>
+        <p id="status" class="status"></p>
+      </section>
+      <section class="card"><div class="section-title"><h2>รายการวันนี้</h2><button id="undoBtn" class="text-btn" disabled>ยกเลิกรายการล่าสุด</button></div><div id="emptyState" class="empty">ยังไม่มีการบันทึกวันนี้</div><div id="eventList" class="events"></div></section>
+    </div>
+
+    <div id="logsView" class="view" hidden>
+      <section class="card"><div class="section-title stacked-mobile"><div><h2>ประวัติการบันทึก</h2><p id="historyHint" class="muted compact">JollyKick Free ดูย้อนหลังได้ 3 วัน</p></div><input id="logDate" class="date-input" type="date"></div><div id="historyLocked" class="notice" hidden>🔒 JollyKick Free ดูประวัติย้อนหลังได้ 3 วัน · Plus จะปลดล็อกประวัติทั้งหมด</div><div class="log-summary"><strong id="logCount">0</strong><span>รายการในวันที่เลือก</span></div><div id="logEmpty" class="empty">ไม่มีรายการในวันที่เลือก</div><div id="logList" class="events"></div></section>
+    </div>
+
+    <div id="activityView" class="view" hidden>
+      <section class="card"><div class="section-title stacked-mobile"><div><h2>24-hour Activity</h2><p class="muted compact">จำนวนการบันทึกในแต่ละชั่วโมงของวันนี้</p></div></div><div id="activityMeta" class="activity-meta"></div><div id="activityChart" class="activity-chart"></div><div class="axis-labels"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div><p class="chart-note">กราฟสะท้อนเฉพาะเหตุการณ์ที่ผู้ใช้กดบันทึกไว้</p></section>
+    </div>
+  </section>
+</main>
+<dialog id="editDialog"><form method="dialog" class="dialog-card"><h2>แก้ไขลักษณะการดิ้น</h2><p id="editTime" class="muted"></p><div id="editMovementOptions" class="chips"></div><div class="dialog-actions"><button id="clearMovementBtn" value="clear" class="ghost danger">ล้างลักษณะ</button><button value="cancel" class="primary small">ปิด</button></div></form></dialog>
+<script src="config.js"></script><script src="app.js"></script>
+</body></html>
