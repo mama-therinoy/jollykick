@@ -59,7 +59,15 @@
     </div>
 
     <div id="logsView" class="view" hidden>
-      <section class="card"><div class="section-title stacked-mobile"><div><h2>ประวัติการบันทึก</h2><p id="historyHint" class="muted compact">JollyKick Free ดูย้อนหลังได้ 3 วัน</p></div><input id="logDate" class="date-input" type="date"></div><div id="historyLocked" class="notice" hidden>🔒 JollyKick Free ดูประวัติย้อนหลังได้ 3 วัน · Plus จะปลดล็อกประวัติทั้งหมด</div><div class="log-summary"><strong id="logCount">0</strong><span>รายการในวันที่เลือก</span></div><div id="logEmpty" class="empty">ไม่มีรายการในวันที่เลือก</div><div id="logList" class="events"></div></section>
+      <section class="card history-card">
+        <div class="section-title stacked-mobile"><div><h2>ประวัติการบันทึก</h2><p id="historyHint" class="muted compact">JollyKick Free · วันนี้ + 2 วันย้อนหลัง</p></div></div>
+        <div id="quickDays" class="quick-days" aria-label="เลือกวันย้อนหลัง"></div>
+        <div class="history-date-row"><label for="logDate">เลือกวันที่</label><input id="logDate" class="date-input" type="date"></div>
+        <div id="historyLocked" class="notice" hidden>🔒 ประวัติก่อนช่วง 3 วันยังถูกเก็บไว้อย่างปลอดภัย และจะเปิดดูได้เมื่อเป็น JollyKick Plus</div>
+        <div class="log-summary"><strong id="logCount">0</strong><span>รายการในวันที่เลือก</span></div>
+        <div id="logEmpty" class="empty">ไม่มีรายการในวันที่เลือก</div><div id="logList" class="events"></div>
+        <div id="freeHistoryFooter" class="history-footer">🔒 JollyKick Free แสดงวันนี้และ 2 วันก่อนหน้า · ข้อมูลที่เก่ากว่านี้ไม่ถูกลบ</div>
+      </section>
     </div>
 
     <div id="activityView" class="view" hidden>

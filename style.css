@@ -466,3 +466,7 @@ dialog::backdrop {
         gap: 2px
     }
 }.field-help{font-size:12px;color:#8c817a;margin:-2px 0 8px}.centered{display:block;margin:16px auto 0}.notice{padding:13px 14px;border-radius:14px;background:#fff7e8;color:#765c2d;font-size:13px;margin:10px 0 14px}#planBadge{font-weight:700}
+
+
+/* JollyKick v0.1.2 — Free 3-day history */
+.quick-days{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 16px}.quick-day{display:flex;flex-direction:column;gap:3px;align-items:flex-start;text-align:left;padding:12px;border-radius:16px;background:#f7f3f0;color:#625852;border:1px solid #eee6e0}.quick-day span{font-size:12px;color:#81766f}.quick-day strong{font-size:15px}.quick-day small{font-size:11px;color:#8d827a}.quick-day.active{background:#302b28;color:#fff;border-color:#302b28}.quick-day.active span,.quick-day.active small{color:#e8dfda}.history-date-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid #f0ebe7;border-bottom:1px solid #f0ebe7}.history-date-row label{margin:0;font-size:13px;color:#756a64}.history-footer{margin-top:16px;padding:12px 14px;border-radius:14px;background:#f7f3f0;color:#756a64;font-size:12px;text-align:center}@media(max-width:480px){.quick-days{gap:6px}.quick-day{padding:10px 8px}.quick-day strong{font-size:13px}.history-date-row{align-items:stretch;flex-direction:column}.history-date-row .date-input{width:100%}}

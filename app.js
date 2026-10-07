@@ -40,7 +40,8 @@ async function routeAfterLogin(){
 }
 function showApp(){
   showOnly('appView'); $('babyTitle').textContent=pregnancy.baby_nickname?.trim() || 'เจ้าตัวน้อย'; $('pregnancyAge').textContent=gestationalText(pregnancy.due_date); $('planBadge').textContent=pregnancy.plan.toUpperCase();
-  $('historyHint').textContent=isPlus()?'ดูประวัติทั้งหมดของการตั้งครรภ์':'JollyKick Free ดูย้อนหลังได้ 3 วัน';
+  $('historyHint').textContent=isPlus()?'JollyKick Plus · ประวัติทั้งหมดของการตั้งครรภ์':'JollyKick Free · วันนี้ + 2 วันย้อนหลัง';
+  configureHistoryAccess();
 }
 
 $('loginForm').addEventListener('submit',async e=>{ e.preventDefault(); $('loginError').textContent=''; const {data,error}=await client.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value}); if(error){$('loginError').textContent='เข้าสู่ระบบไม่สำเร็จ: '+error.message;return} user=data.user; await routeAfterLogin(); });
@@ -71,10 +72,49 @@ function eventRow(ev,allowDelete=false){return `<div class="event" data-id="${ev
 function bindEventActions(root){root.onclick=async e=>{const row=e.target.closest('.event');if(!row)return;const id=Number(row.dataset.id);if(e.target.closest('.edit'))openEdit(id);if(e.target.closest('.delete')&&confirm('ลบรายการนี้ใช่หรือไม่?')){if(await deleteEvent(id))await loadLogDate()}}}
 function findEvent(id){return todayEvents.find(x=>x.id===id)||window.currentLogEvents?.find(x=>x.id===id)}
 function openEdit(id){const ev=findEvent(id);if(!ev)return;editingId=id;$('editTime').textContent=fmtTime(ev.occurred_at)+' · '+labelType(ev.movement_type);document.querySelectorAll('#editMovementOptions .chip').forEach(x=>x.classList.toggle('active',x.dataset.type===ev.movement_type));$('editDialog').showModal()}
-$('clearMovementBtn').onclick=async e=>{e.preventDefault();if(!editingId)return;if(await updateMovement(editingId,null)){$('editDialog').close();await refreshVisibleData()}};
+$('clearMovementBtn').onclick=async e=>{e.preventDefault();if(!editingId)return;if(await updateMovement(editingId,'movement')){$('editDialog').close();await refreshVisibleData()}};
 
-$('logDate').onchange=loadLogDate;
-async function loadLogDate(){ const d=dateFromInput($('logDate').value); if(!isPlus()&&d<minFreeHistoryDate()){ $('historyLocked').hidden=false;$('logCount').textContent='—';$('logEmpty').hidden=true;$('logList').innerHTML='';return } $('historyLocked').hidden=true; const [start,end]=dayBounds(d); const {data,error}=await client.from('kick_events').select('id,occurred_at,movement_type,note,created_at').eq('pregnancy_id',pregnancy.id).gte('occurred_at',start).lt('occurred_at',end).order('occurred_at',{ascending:false}); if(error){$('logList').innerHTML='<p class="error">'+error.message+'</p>';return} window.currentLogEvents=data||[];$('logCount').textContent=window.currentLogEvents.length;$('logEmpty').hidden=!!window.currentLogEvents.length;$('logList').innerHTML=window.currentLogEvents.map(ev=>eventRow(ev,false)).join('');bindEventActions($('logList')); }
+function thaiShortDate(d){ return new Intl.DateTimeFormat('th-TH',{day:'numeric',month:'short'}).format(d) }
+function historyDays(){
+  return [0,1,2].map(offset=>{ const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-offset); return d; });
+}
+function configureHistoryAccess(){
+  const date=$('logDate'); date.max=inputDate();
+  if(isPlus()){ date.removeAttribute('min'); $('freeHistoryFooter').hidden=true; }
+  else { date.min=inputDate(minFreeHistoryDate()); $('freeHistoryFooter').hidden=false; }
+  renderQuickDays();
+}
+function renderQuickDays(){
+  const selected=$('logDate').value;
+  $('quickDays').innerHTML=historyDays().map((d,i)=>{
+    const value=inputDate(d), title=i===0?'วันนี้':i===1?'เมื่อวาน':'2 วันที่แล้ว';
+    return `<button type="button" class="quick-day ${selected===value?'active':''}" data-date="${value}"><span>${title}</span><strong>${thaiShortDate(d)}</strong><small id="quickCount${i}">— ครั้ง</small></button>`;
+  }).join('');
+  $('quickDays').onclick=async e=>{ const b=e.target.closest('[data-date]'); if(!b)return; $('logDate').value=b.dataset.date; renderQuickDays(); await loadLogDate(); };
+  loadQuickDayCounts();
+}
+async function loadQuickDayCounts(){
+  if(!pregnancy)return;
+  const days=historyDays();
+  await Promise.all(days.map(async(d,i)=>{
+    const [start,end]=dayBounds(d);
+    const {count,error}=await client.from('kick_events').select('id',{count:'exact',head:true}).eq('pregnancy_id',pregnancy.id).gte('occurred_at',start).lt('occurred_at',end);
+    const el=$(`quickCount${i}`); if(el)el.textContent=error?'—':`${count||0} ครั้ง`;
+  }));
+}
+$('logDate').onchange=async()=>{ renderQuickDays(); await loadLogDate(); };
+async function loadLogDate(){
+  const value=$('logDate').value || inputDate(); $('logDate').value=value;
+  const d=dateFromInput(value);
+  if(!isPlus()&&d<minFreeHistoryDate()){
+    $('historyLocked').hidden=false;$('logCount').textContent='—';$('logEmpty').hidden=true;$('logList').innerHTML='';window.currentLogEvents=[];return;
+  }
+  $('historyLocked').hidden=true;
+  const [start,end]=dayBounds(d);
+  const {data,error}=await client.from('kick_events').select('id,occurred_at,movement_type,note,created_at').eq('pregnancy_id',pregnancy.id).gte('occurred_at',start).lt('occurred_at',end).order('occurred_at',{ascending:false});
+  if(error){$('logList').innerHTML='<p class="error">'+error.message+'</p>';return}
+  window.currentLogEvents=data||[];$('logCount').textContent=window.currentLogEvents.length;$('logEmpty').hidden=!!window.currentLogEvents.length;$('logList').innerHTML=window.currentLogEvents.map(ev=>eventRow(ev,false)).join('');bindEventActions($('logList'));
+}
 
 async function loadActivity(){ const [start,end]=dayBounds(); const {data,error}=await client.from('kick_events').select('occurred_at').eq('pregnancy_id',pregnancy.id).gte('occurred_at',start).lt('occurred_at',end).order('occurred_at'); if(error){$('activityMeta').textContent='โหลดกราฟไม่สำเร็จ: '+error.message;return} const counts=Array(24).fill(0);(data||[]).forEach(x=>counts[new Date(x.occurred_at).getHours()]++);const max=Math.max(1,...counts);$('activityChart').innerHTML=counts.map((n,h)=>`<div class="bar-wrap"><div class="bar" style="height:${n?Math.max(5,(n/max)*100):1}%" data-tip="${String(h).padStart(2,'0')}:00–${String(h).padStart(2,'0')}:59 · ${n} ครั้ง"></div></div>`).join('');$('activityMeta').textContent=(data||[]).length?`รวม ${(data||[]).length} รายการวันนี้`:'ยังไม่มีข้อมูลวันนี้'; }
 async function refreshVisibleData(){await loadToday();if(!$('logsView').hidden)await loadLogDate();if(!$('activityView').hidden)await loadActivity()}
